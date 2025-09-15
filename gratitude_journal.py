@@ -170,11 +170,23 @@ class GratitudeJournal:
     
     def save_gratitude_journal(self):
         try:
-            # Create the folder path
-            folder_path = r"D:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal"
+            # Try D: drive first, fallback to G: drive
+            folder_paths = [
+                r"D:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal",
+                r"G:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal"
+            ]
             
-            # Create directory if it doesn't exist
-            os.makedirs(folder_path, exist_ok=True)
+            folder_path = None
+            for path in folder_paths:
+                try:
+                    os.makedirs(path, exist_ok=True)
+                    folder_path = path
+                    break
+                except OSError:
+                    continue
+            
+            if folder_path is None:
+                raise OSError("Neither D: nor G: drive is accessible")
             
             # Generate filename with today's date
             today = datetime.now().strftime("%Y-%m-%d")
@@ -215,7 +227,7 @@ Tags: #gratitude"""
         except Exception as e:
             messagebox.showerror(
                 "Error", 
-                f"Could not save the gratitude journal:\n{str(e)}\n\nPlease check if the D: drive is accessible."
+                f"Could not save the gratitude journal:\n{str(e)}\n\nPlease check if the D: or G: drive is accessible."
             )
     
     def cancel(self):
