@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import messagebox, ttk
+from tkinter import messagebox, ttk, filedialog, simpledialog
 from datetime import datetime
 import os
 import sys
@@ -149,22 +149,89 @@ class GratitudeJournal:
                     if line and not line.startswith('#'):
                         paths.append(line)
         except FileNotFoundError:
-            # Fallback to hardcoded paths if config file doesn't exist
-            paths = [
-                r"D:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal",
-                r"G:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal"
-            ]
+            # Prompt user for directory and create config file
+            paths = self.create_config_from_user_input(config_file)
         except Exception as e:
             messagebox.showerror(
                 "Configuration Error",
-                f"Error reading config.txt:\n{str(e)}\n\nUsing default paths."
+                f"Error reading config.txt:\n{str(e)}\n\nPlease select a directory."
             )
-            paths = [
-                r"D:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal",
-                r"G:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal"
-            ]
+            paths = self.create_config_from_user_input(config_file)
 
         return paths
+
+    def create_config_from_user_input(self, config_file):
+        """Prompt user for directory and create config file"""
+        while True:
+            # Show informational message first
+            messagebox.showinfo(
+                "First Time Setup",
+                "No configuration file found.\n\nPlease select a directory where you want to store your gratitude journal files."
+            )
+
+            # Let user choose directory
+            directory = filedialog.askdirectory(
+                title="Select Directory for Gratitude Journal Files",
+                initialdir=os.path.expanduser("~")
+            )
+
+            if not directory:
+                # User cancelled - ask if they want to try again or exit
+                if messagebox.askyesno("Exit?", "No directory selected. Do you want to exit the application?"):
+                    self.root.quit()
+                    sys.exit()
+                continue
+
+            # Test if directory is writable
+            test_path = os.path.join(directory, "test_write_permission.tmp")
+            try:
+                with open(test_path, 'w') as f:
+                    f.write("test")
+                os.remove(test_path)
+
+                # Directory is accessible, create config file
+                self.save_config_file(config_file, directory)
+
+                messagebox.showinfo(
+                    "Setup Complete",
+                    f"Configuration saved!\n\nYour gratitude journal files will be saved to:\n{directory}\n\nYou can modify the config.txt file later to add more directories."
+                )
+
+                return [directory]
+
+            except Exception as e:
+                # Directory not accessible, ask user to choose again
+                retry = messagebox.askyesno(
+                    "Directory Not Accessible",
+                    f"Cannot write to the selected directory:\n{directory}\n\nError: {str(e)}\n\nWould you like to choose a different directory?"
+                )
+                if not retry:
+                    self.root.quit()
+                    sys.exit()
+
+    def save_config_file(self, config_file, directory):
+        """Create a new config.txt file with the user's chosen directory"""
+        config_content = f"""# Gratitude Journal Configuration
+# List the directories where gratitude journal files should be saved
+# The program will try each directory in order until one is accessible
+# You can add, remove, or modify these paths as needed
+
+# User selected directory
+{directory}
+
+# You can add additional backup locations below:
+# C:\\Users\\YourUsername\\Documents\\Gratitude Journal
+# C:\\Gratitude Journal
+# ~/Documents/Gratitude Journal"""
+
+        try:
+            with open(config_file, 'w', encoding='utf-8') as f:
+                f.write(config_content)
+        except Exception as e:
+            messagebox.showerror(
+                "Configuration Error",
+                f"Could not save configuration file:\n{str(e)}"
+            )
     
     def submit_entry(self):
         entry_text = self.entry_var.get().strip()
