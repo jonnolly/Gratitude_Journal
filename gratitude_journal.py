@@ -135,6 +135,36 @@ class GratitudeJournal:
             fg='#7f8c8d'
         )
         self.progress_label.pack(pady=10)
+
+    def load_config_paths(self):
+        """Load directory paths from config.txt file"""
+        config_file = os.path.join(os.path.dirname(__file__), 'config.txt')
+        paths = []
+
+        try:
+            with open(config_file, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    # Skip empty lines and comments
+                    if line and not line.startswith('#'):
+                        paths.append(line)
+        except FileNotFoundError:
+            # Fallback to hardcoded paths if config file doesn't exist
+            paths = [
+                r"D:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal",
+                r"G:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal"
+            ]
+        except Exception as e:
+            messagebox.showerror(
+                "Configuration Error",
+                f"Error reading config.txt:\n{str(e)}\n\nUsing default paths."
+            )
+            paths = [
+                r"D:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal",
+                r"G:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal"
+            ]
+
+        return paths
     
     def submit_entry(self):
         entry_text = self.entry_var.get().strip()
@@ -170,23 +200,29 @@ class GratitudeJournal:
     
     def save_gratitude_journal(self):
         try:
-            # Try D: drive first, fallback to G: drive
-            folder_paths = [
-                r"D:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal",
-                r"G:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal"
-            ]
-            
+            # Load paths from configuration file
+            folder_paths = self.load_config_paths()
+
+            if not folder_paths:
+                raise OSError("No directory paths configured in config.txt")
+
             folder_path = None
+            last_error = None
+
             for path in folder_paths:
                 try:
                     os.makedirs(path, exist_ok=True)
                     folder_path = path
                     break
-                except OSError:
+                except OSError as e:
+                    last_error = e
                     continue
-            
+
             if folder_path is None:
-                raise OSError("Neither D: nor G: drive is accessible")
+                error_msg = f"None of the configured directories are accessible"
+                if last_error:
+                    error_msg += f":\nLast error: {str(last_error)}"
+                raise OSError(error_msg)
             
             # Generate filename with today's date and counter
             today = datetime.now().strftime("%Y-%m-%d")
@@ -231,8 +267,8 @@ Tags: #gratitude"""
             
         except Exception as e:
             messagebox.showerror(
-                "Error", 
-                f"Could not save the gratitude journal:\n{str(e)}\n\nPlease check if the D: or G: drive is accessible."
+                "Error",
+                f"Could not save the gratitude journal:\n{str(e)}\n\nPlease check the directory paths in config.txt and ensure at least one is accessible."
             )
     
     def cancel(self):
