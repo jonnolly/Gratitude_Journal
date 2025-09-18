@@ -188,11 +188,25 @@ class GratitudeJournal:
             if folder_path is None:
                 raise OSError("Neither D: nor G: drive is accessible")
             
-            # Generate filename with today's date
+            # Generate filename with today's date and counter
             today = datetime.now().strftime("%Y-%m-%d")
-            filename = f"{today} Gratitude.md"
-            filepath = os.path.join(folder_path, filename)
-            
+            base_filename = f"{today} Gratitude"
+            counter = 0
+
+            # Find the next available filename
+            while True:
+                if counter == 0:
+                    filename = f"{base_filename}.md"
+                else:
+                    filename = f"{base_filename}_{counter}.md"
+
+                filepath = os.path.join(folder_path, filename)
+
+                if not os.path.exists(filepath):
+                    break
+
+                counter += 1
+
             # Create the content
             content = f"""## Three things I'm grateful for today:
 1. {self.gratitude_entries[0]}
@@ -201,15 +215,6 @@ class GratitudeJournal:
 
 ---
 Tags: #gratitude"""
-            
-            # Check if file already exists
-            if os.path.exists(filepath):
-                result = messagebox.askyesno(
-                    "File Exists", 
-                    f"A gratitude journal for today already exists.\nDo you want to overwrite it?"
-                )
-                if not result:
-                    return
             
             # Write the file
             with open(filepath, 'w', encoding='utf-8') as f:
