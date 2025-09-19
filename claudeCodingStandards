@@ -1,0 +1,22 @@
+# Claude Coding Standards
+
+## Requirements Management
+- Store all requirements given by the user in this file
+- Create and document requirements for every new feature request and bug fix
+- Any requirement created by Claude must be confirmed by the user before implementation
+- Maintain a clear record of all functional and non-functional requirements for the project
+
+## Requirements Log
+
+### Initial Requirements (2025-09-19)
+1. **Requirements Documentation Standard**: Store all user requirements in claudeCodingStandards file. Create requirements for new features and bug fixes. All Claude-generated requirements must be confirmed by user before implementation.
+   - Status: Confirmed
+   - Type: Process requirement
+
+2. **Test Generation and Development Environment Standard**: Generate tests for each requirement that are checked every time a change is made. Store tests in a separate development environment, isolated from the application environment.
+   - Status: Confirmed
+   - Type: Testing and environment requirement
+
+3. **Self-Verification Standard**: Always self-verify when implementing bug fixes and new features. For bugs: first confirm ability to replicate the bug, create a test from this replication, implement the fix, then confirm the bug no longer occurs after running the test. If unable to replicate a bug, inform the user immediately. This standard should be saved to a claudeCodingStandards document accessible across all coding projects, not just the current project.
+   - Status: Confirmed
+   - Type: Quality assurance and verification requirement
