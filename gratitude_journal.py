@@ -13,17 +13,7 @@ class GratitudeJournal:
         
         # Set window icon (if icon file exists)
         try:
-            # Get the directory where this script/executable is located
-            if getattr(sys, 'frozen', False):
-                # Running as compiled executable
-                script_dir = os.path.dirname(sys.executable)
-            else:
-                # Running as Python script
-                script_dir = os.path.dirname(os.path.abspath(__file__))
-
-            icon_path = os.path.join(script_dir, "gratitude_journal_icon.ico")
-            if os.path.exists(icon_path):
-                self.root.iconbitmap(icon_path)
+            self.root.iconbitmap("gratitude_icon.ico")
         except:
             pass  # Ignore if icon file doesn't exist
         
