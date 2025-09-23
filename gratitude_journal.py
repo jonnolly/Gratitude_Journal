@@ -328,15 +328,15 @@ Tags: #gratitude"""
         # Create new window
         random_window = tk.Toplevel(self.root)
         random_window.title("Random Gratitude Entry")
-        random_window.geometry("400x300")
-        random_window.resizable(False, False)
+        random_window.geometry("450x400")
+        random_window.resizable(True, True)
         random_window.configure(bg='#f0f8ff')
 
         # Center the window
         random_window.update_idletasks()
-        x = (random_window.winfo_screenwidth() // 2) - (400 // 2)
-        y = (random_window.winfo_screenheight() // 2) - (300 // 2)
-        random_window.geometry(f"400x300+{x}+{y}")
+        x = (random_window.winfo_screenwidth() // 2) - (450 // 2)
+        y = (random_window.winfo_screenheight() // 2) - (400 // 2)
+        random_window.geometry(f"450x400+{x}+{y}")
 
         # Extract date from filename
         filename_only = os.path.basename(filename)
@@ -363,26 +363,47 @@ Tags: #gratitude"""
         )
         date_label.pack(pady=5)
 
-        # Content frame
-        content_frame = tk.Frame(random_window, bg='#f0f8ff')
-        content_frame.pack(pady=20, padx=20, fill='both', expand=True)
+        # Main container frame
+        main_container = tk.Frame(random_window, bg='#f0f8ff')
+        main_container.pack(pady=10, padx=20, fill='both', expand=True)
 
-        # Display gratitude items
+        # Create canvas and scrollbar for scrollable content
+        canvas = tk.Canvas(main_container, bg='#f0f8ff', highlightthickness=0)
+        scrollbar = tk.Scrollbar(main_container, orient="vertical", command=canvas.yview)
+        scrollable_frame = tk.Frame(canvas, bg='#f0f8ff')
+
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        # Pack canvas and scrollbar
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        # Display gratitude items in scrollable frame
         for i, item in enumerate(gratitude_items, 1):
             item_label = tk.Label(
-                content_frame,
+                scrollable_frame,
                 text=f"{i}. {item.strip()}",
                 font=("Arial", 11),
                 bg='#f0f8ff',
                 fg='#2c3e50',
-                wraplength=350,
+                wraplength=380,
                 justify='left'
             )
-            item_label.pack(pady=8, anchor='w')
+            item_label.pack(pady=8, anchor='w', padx=10)
+
+        # Button frame (outside of scrollable area)
+        button_frame = tk.Frame(random_window, bg='#f0f8ff')
+        button_frame.pack(pady=10)
 
         # Close button
         close_btn = tk.Button(
-            content_frame,
+            button_frame,
             text="Close",
             command=random_window.destroy,
             font=("Arial", 10),
@@ -394,7 +415,13 @@ Tags: #gratitude"""
             bd=2,
             cursor='hand2'
         )
-        close_btn.pack(pady=15)
+        close_btn.pack()
+
+        # Bind mousewheel to canvas for scrolling
+        def _on_mousewheel(event):
+            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+
+        canvas.bind_all("<MouseWheel>", _on_mousewheel)
 
     def cancel(self):
         if messagebox.askyesno("Cancel", "Are you sure you want to cancel?"):
