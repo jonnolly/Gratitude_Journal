@@ -3,6 +3,9 @@ from tkinter import messagebox, ttk
 from datetime import datetime
 import os
 import sys
+import random
+import glob
+import re
 
 class GratitudeJournal:
     def __init__(self):
@@ -135,6 +138,25 @@ class GratitudeJournal:
             fg='#7f8c8d'
         )
         self.progress_label.pack(pady=10)
+
+        # Shuffle button (bottom right corner)
+        self.shuffle_btn = tk.Button(
+            self.root,
+            text="🔀",
+            command=self.show_random_entry,
+            font=("Arial", 16),
+            bg='#e74c3c',
+            fg='white',
+            width=3,
+            height=1,
+            relief='raised',
+            bd=2,
+            cursor='hand2'
+        )
+        self.shuffle_btn.place(x=450, y=350)
+
+        # Create tooltip for shuffle button
+        self.create_tooltip(self.shuffle_btn, "View random entry")
     
     def submit_entry(self):
         entry_text = self.entry_var.get().strip()
@@ -235,6 +257,172 @@ Tags: #gratitude"""
                 f"Could not save the gratitude journal:\n{str(e)}\n\nPlease check if the D: or G: drive is accessible."
             )
     
+    def create_tooltip(self, widget, text):
+        def show_tooltip(event):
+            tooltip = tk.Toplevel()
+            tooltip.wm_overrideredirect(True)
+            tooltip.wm_geometry(f"+{event.x_root + 10}+{event.y_root + 10}")
+            tooltip.configure(bg='black')
+
+            label = tk.Label(
+                tooltip,
+                text=text,
+                bg='black',
+                fg='white',
+                font=("Arial", 9),
+                padx=5,
+                pady=2
+            )
+            label.pack()
+
+            widget.tooltip = tooltip
+
+        def hide_tooltip(event):
+            if hasattr(widget, 'tooltip'):
+                widget.tooltip.destroy()
+                del widget.tooltip
+
+        widget.bind('<Enter>', show_tooltip)
+        widget.bind('<Leave>', hide_tooltip)
+
+    def show_random_entry(self):
+        try:
+            # Try to find gratitude journal files
+            folder_paths = [
+                r"D:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal",
+                r"G:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal"
+            ]
+
+            all_files = []
+            for folder_path in folder_paths:
+                if os.path.exists(folder_path):
+                    pattern = os.path.join(folder_path, "*Gratitude*.md")
+                    files = glob.glob(pattern)
+                    all_files.extend(files)
+
+            if not all_files:
+                messagebox.showinfo("No Entries", "No gratitude journal entries found to display.")
+                return
+
+            # Select a random file
+            random_file = random.choice(all_files)
+
+            # Read the content
+            with open(random_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            # Extract the gratitude items using regex
+            pattern = r'\d+\.\s+(.+?)(?=\n\d+\.|\n---|\Z)'
+            matches = re.findall(pattern, content, re.DOTALL)
+
+            if matches:
+                # Create a new window to display the random entry
+                self.display_random_entry_window(random_file, matches)
+            else:
+                messagebox.showinfo("Error", "Could not parse the selected gratitude entry.")
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not load random entry:\n{str(e)}")
+
+    def display_random_entry_window(self, filename, gratitude_items):
+        # Create new window
+        random_window = tk.Toplevel(self.root)
+        random_window.title("Random Gratitude Entry")
+        random_window.geometry("450x400")
+        random_window.resizable(True, True)
+        random_window.configure(bg='#f0f8ff')
+
+        # Center the window
+        random_window.update_idletasks()
+        x = (random_window.winfo_screenwidth() // 2) - (450 // 2)
+        y = (random_window.winfo_screenheight() // 2) - (400 // 2)
+        random_window.geometry(f"450x400+{x}+{y}")
+
+        # Extract date from filename
+        filename_only = os.path.basename(filename)
+        date_match = re.match(r'(\d{4}-\d{2}-\d{2})', filename_only)
+        date_str = date_match.group(1) if date_match else "Unknown Date"
+
+        # Title
+        title_label = tk.Label(
+            random_window,
+            text="Random Gratitude Entry",
+            font=("Arial", 16, "bold"),
+            bg='#f0f8ff',
+            fg='#2c3e50'
+        )
+        title_label.pack(pady=15)
+
+        # Date
+        date_label = tk.Label(
+            random_window,
+            text=date_str,
+            font=("Arial", 12),
+            bg='#f0f8ff',
+            fg='#7f8c8d'
+        )
+        date_label.pack(pady=5)
+
+        # Main container frame
+        main_container = tk.Frame(random_window, bg='#f0f8ff')
+        main_container.pack(pady=10, padx=20, fill='both', expand=True)
+
+        # Create canvas and scrollbar for scrollable content
+        canvas = tk.Canvas(main_container, bg='#f0f8ff', highlightthickness=0)
+        scrollbar = tk.Scrollbar(main_container, orient="vertical", command=canvas.yview)
+        scrollable_frame = tk.Frame(canvas, bg='#f0f8ff')
+
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        # Pack canvas and scrollbar
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        # Display gratitude items in scrollable frame
+        for i, item in enumerate(gratitude_items, 1):
+            item_label = tk.Label(
+                scrollable_frame,
+                text=f"{i}. {item.strip()}",
+                font=("Arial", 11),
+                bg='#f0f8ff',
+                fg='#2c3e50',
+                wraplength=380,
+                justify='left'
+            )
+            item_label.pack(pady=8, anchor='w', padx=10)
+
+        # Button frame (outside of scrollable area)
+        button_frame = tk.Frame(random_window, bg='#f0f8ff')
+        button_frame.pack(pady=10)
+
+        # Close button
+        close_btn = tk.Button(
+            button_frame,
+            text="Close",
+            command=random_window.destroy,
+            font=("Arial", 10),
+            bg='#95a5a6',
+            fg='white',
+            padx=15,
+            pady=5,
+            relief='raised',
+            bd=2,
+            cursor='hand2'
+        )
+        close_btn.pack()
+
+        # Bind mousewheel to canvas for scrolling
+        def _on_mousewheel(event):
+            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+
+        canvas.bind_all("<MouseWheel>", _on_mousewheel)
+
     def cancel(self):
         if messagebox.askyesno("Cancel", "Are you sure you want to cancel?"):
             self.root.quit()
