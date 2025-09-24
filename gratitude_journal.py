@@ -421,9 +421,13 @@ Tags: #gratitude"""
             )
             item_label.pack(pady=8, anchor='w', padx=10)
 
+        # Create an inner frame to center the buttons
+        inner_button_frame = tk.Frame(button_frame, bg='#f0f8ff')
+        inner_button_frame.pack()
+
         # View Another Random Entry button
         another_btn = tk.Button(
-            button_frame,
+            inner_button_frame,
             text="View Another Random Entry",
             command=lambda: self.view_another_random_entry(random_window),
             font=("Arial", 10),
@@ -439,7 +443,7 @@ Tags: #gratitude"""
 
         # Close button
         close_btn = tk.Button(
-            button_frame,
+            inner_button_frame,
             text="Close",
             command=random_window.destroy,
             font=("Arial", 10),
