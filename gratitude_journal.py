@@ -1,11 +1,12 @@
 import tkinter as tk
-from tkinter import messagebox, ttk
+from tkinter import messagebox, ttk, filedialog
 from datetime import datetime
 import os
 import sys
 import random
 import glob
 import re
+import csv
 
 class GratitudeJournal:
     def __init__(self):
@@ -31,6 +32,7 @@ class GratitudeJournal:
         self.current_entry = 0
         
         # Create the UI
+        self.create_menu()
         self.create_widgets()
         
     def center_window(self):
@@ -38,7 +40,15 @@ class GratitudeJournal:
         x = (self.root.winfo_screenwidth() // 2) - (500 // 2)
         y = (self.root.winfo_screenheight() // 2) - (400 // 2)
         self.root.geometry(f"500x400+{x}+{y}")
-    
+
+    def create_menu(self):
+        menubar = tk.Menu(self.root)
+        self.root.config(menu=menubar)
+
+        file_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="File", menu=file_menu)
+        file_menu.add_command(label="Import from Presently", command=self.import_from_presently)
+
     def create_widgets(self):
         # Title
         title_label = tk.Label(
@@ -422,6 +432,96 @@ Tags: #gratitude"""
             canvas.yview_scroll(int(-1*(event.delta/120)), "units")
 
         canvas.bind_all("<MouseWheel>", _on_mousewheel)
+
+    def import_from_presently(self):
+        file_path = filedialog.askopenfilename(
+            title="Select Presently Backup File",
+            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")]
+        )
+
+        if not file_path:
+            return
+
+        try:
+            imported_count = 0
+            skipped_count = 0
+
+            with open(file_path, 'r', encoding='utf-8', newline='') as csvfile:
+                csv_reader = csv.DictReader(csvfile)
+
+                for row in csv_reader:
+                    entry_date = row['entryDate'].strip()
+                    entry_content = row['entryContent'].strip()
+
+                    if entry_date and entry_content:
+                        success = self.create_gratitude_file_from_presently(entry_date, entry_content)
+                        if success:
+                            imported_count += 1
+                        else:
+                            skipped_count += 1
+
+            messagebox.showinfo(
+                "Import Complete",
+                f"Import completed!\n\n"
+                f"Successfully imported: {imported_count} entries\n"
+                f"Skipped (already exist): {skipped_count} entries"
+            )
+
+        except Exception as e:
+            messagebox.showerror(
+                "Import Error",
+                f"Could not import the Presently backup file:\n{str(e)}"
+            )
+
+    def create_gratitude_file_from_presently(self, entry_date, entry_content):
+        try:
+            folder_paths = [
+                r"D:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal",
+                r"G:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal"
+            ]
+
+            folder_path = None
+            for path in folder_paths:
+                try:
+                    os.makedirs(path, exist_ok=True)
+                    folder_path = path
+                    break
+                except OSError:
+                    continue
+
+            if folder_path is None:
+                raise OSError("Neither D: nor G: drive is accessible")
+
+            base_filename = f"{entry_date} Gratitude"
+            counter = 0
+
+            while True:
+                if counter == 0:
+                    filename = f"{base_filename}.md"
+                else:
+                    filename = f"{base_filename}_{counter}.md"
+
+                filepath = os.path.join(folder_path, filename)
+
+                if not os.path.exists(filepath):
+                    break
+
+                counter += 1
+
+            content = f"""## Gratitude Entry (Imported from Presently):
+{entry_content}
+
+---
+Tags: #gratitude #imported-presently"""
+
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write(content)
+
+            return True
+
+        except Exception as e:
+            print(f"Error creating file for {entry_date}: {str(e)}")
+            return False
 
     def cancel(self):
         if messagebox.askyesno("Cancel", "Are you sure you want to cancel?"):
