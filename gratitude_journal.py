@@ -239,11 +239,21 @@ class GratitudeJournal:
 
                 counter += 1
 
-            # Create the content
-            content = f"""## Three things I'm grateful for today:
-1. {self.gratitude_entries[0]}
-2. {self.gratitude_entries[1]}
-3. {self.gratitude_entries[2]}
+            # Create the content with variable number of entries
+            num_entries = len(self.gratitude_entries)
+            if num_entries == 3:
+                header = "## Three things I'm grateful for today:"
+            elif num_entries == 1:
+                header = "## One thing I'm grateful for today:"
+            elif num_entries == 2:
+                header = "## Two things I'm grateful for today:"
+            else:
+                header = f"## {num_entries} things I'm grateful for today:"
+
+            gratitude_list = "\n".join([f"{i+1}. {entry}" for i, entry in enumerate(self.gratitude_entries)])
+
+            content = f"""{header}
+{gratitude_list}
 
 ---
 Tags: #gratitude"""
@@ -475,6 +485,13 @@ Tags: #gratitude"""
 
     def create_gratitude_file_from_presently(self, entry_date, entry_content):
         try:
+            # Split entry content by double line-breaks to get individual gratitude items
+            # Handle both \r\n\r\n and \n\n patterns
+            gratitude_items = re.split(r'\r?\n\r?\n', entry_content.strip())
+
+            # Filter out empty items and strip whitespace
+            gratitude_items = [item.strip() for item in gratitude_items if item.strip()]
+
             folder_paths = [
                 r"D:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal",
                 r"G:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal"
@@ -508,8 +525,11 @@ Tags: #gratitude"""
 
                 counter += 1
 
-            content = f"""## Gratitude Entry (Imported from Presently):
-{entry_content}
+            # Create content with numbered list of gratitude items
+            gratitude_list = "\n".join([f"{i+1}. {item}" for i, item in enumerate(gratitude_items)])
+
+            content = f"""## Things I'm grateful for today (Imported from Presently):
+{gratitude_list}
 
 ---
 Tags: #gratitude #imported-presently"""
