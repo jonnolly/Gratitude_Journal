@@ -383,9 +383,13 @@ Tags: #gratitude"""
         )
         date_label.pack(pady=5)
 
-        # Main container frame
+        # Button frame FIRST (to reserve space at bottom)
+        button_frame = tk.Frame(random_window, bg='#f0f8ff')
+        button_frame.pack(side='bottom', pady=10, fill='x')
+
+        # Main container frame (fills remaining space)
         main_container = tk.Frame(random_window, bg='#f0f8ff')
-        main_container.pack(pady=10, padx=20, fill='both', expand=True)
+        main_container.pack(pady=(10,0), padx=20, fill='both', expand=True)
 
         # Create canvas and scrollbar for scrollable content
         canvas = tk.Canvas(main_container, bg='#f0f8ff', highlightthickness=0)
@@ -417,9 +421,21 @@ Tags: #gratitude"""
             )
             item_label.pack(pady=8, anchor='w', padx=10)
 
-        # Button frame (outside of scrollable area)
-        button_frame = tk.Frame(random_window, bg='#f0f8ff')
-        button_frame.pack(pady=10)
+        # View Another Random Entry button
+        another_btn = tk.Button(
+            button_frame,
+            text="View Another Random Entry",
+            command=lambda: self.view_another_random_entry(random_window),
+            font=("Arial", 10),
+            bg='#3498db',
+            fg='white',
+            padx=15,
+            pady=5,
+            relief='raised',
+            bd=2,
+            cursor='hand2'
+        )
+        another_btn.pack(side='left', padx=5)
 
         # Close button
         close_btn = tk.Button(
@@ -435,13 +451,54 @@ Tags: #gratitude"""
             bd=2,
             cursor='hand2'
         )
-        close_btn.pack()
+        close_btn.pack(side='left', padx=5)
 
         # Bind mousewheel to canvas for scrolling
         def _on_mousewheel(event):
             canvas.yview_scroll(int(-1*(event.delta/120)), "units")
 
         canvas.bind_all("<MouseWheel>", _on_mousewheel)
+
+    def view_another_random_entry(self, current_window):
+        """Load and display another random entry, replacing the current content"""
+        try:
+            # Try to find gratitude journal files
+            folder_paths = [
+                r"D:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal",
+                r"G:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal"
+            ]
+
+            all_files = []
+            for folder_path in folder_paths:
+                if os.path.exists(folder_path):
+                    pattern = os.path.join(folder_path, "*Gratitude*.md")
+                    files = glob.glob(pattern)
+                    all_files.extend(files)
+
+            if not all_files:
+                messagebox.showinfo("No Entries", "No gratitude journal entries found to display.")
+                return
+
+            # Select a random file
+            random_file = random.choice(all_files)
+
+            # Read the content
+            with open(random_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            # Extract the gratitude items using regex - handle both original and imported formats
+            pattern = r'\d+\.\s+(.+?)(?=\n\d+\.|\n---|\Z)'
+            matches = re.findall(pattern, content, re.DOTALL)
+
+            if matches:
+                # Close the current window and open a new one with the new entry
+                current_window.destroy()
+                self.display_random_entry_window(random_file, matches)
+            else:
+                messagebox.showinfo("Error", "Could not parse the selected gratitude entry.")
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not load random entry:\n{str(e)}")
 
     def import_from_presently(self):
         file_path = filedialog.askopenfilename(
