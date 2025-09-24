@@ -163,7 +163,7 @@ class GratitudeJournal:
             bd=2,
             cursor='hand2'
         )
-        self.shuffle_btn.place(x=450, y=350)
+        self.shuffle_btn.place(x=450, y=330)
 
         # Create tooltip for shuffle button
         self.create_tooltip(self.shuffle_btn, "View random entry")
