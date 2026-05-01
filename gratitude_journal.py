@@ -9,6 +9,13 @@ import re
 import csv
 
 class GratitudeJournal:
+    JOURNAL_FOLDER_PATHS = [
+        r"E:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal",
+        r"D:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal",
+        r"G:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal"
+    ]
+    SAVE_FOLDER_PATHS = JOURNAL_FOLDER_PATHS[1:]  # exclude C: drive for saving
+
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("My Gratitude Journal")
@@ -202,14 +209,8 @@ class GratitudeJournal:
     
     def save_gratitude_journal(self):
         try:
-            # Try D: drive first, fallback to G: drive
-            folder_paths = [
-                r"D:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal",
-                r"G:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal"
-            ]
-            
             folder_path = None
-            for path in folder_paths:
+            for path in self.SAVE_FOLDER_PATHS:
                 try:
                     os.makedirs(path, exist_ok=True)
                     folder_path = path
@@ -218,7 +219,7 @@ class GratitudeJournal:
                     continue
             
             if folder_path is None:
-                raise OSError("Neither D: nor G: drive is accessible")
+                raise OSError("None of the specified drives are accessible")
             
             # Generate filename with today's date and counter
             today = datetime.now().strftime("%Y-%m-%d")
@@ -274,7 +275,7 @@ Tags: #gratitude"""
         except Exception as e:
             messagebox.showerror(
                 "Error", 
-                f"Could not save the gratitude journal:\n{str(e)}\n\nPlease check if the D: or G: drive is accessible."
+                f"Could not save the gratitude journal:\n{str(e)}\n\nPlease check if the C:, D:, or G: drive is accessible."
             )
     
     def create_tooltip(self, widget, text):
@@ -307,14 +308,8 @@ Tags: #gratitude"""
 
     def show_random_entry(self):
         try:
-            # Try to find gratitude journal files
-            folder_paths = [
-                r"D:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal",
-                r"G:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal"
-            ]
-
             all_files = []
-            for folder_path in folder_paths:
+            for folder_path in self.JOURNAL_FOLDER_PATHS:
                 if os.path.exists(folder_path):
                     pattern = os.path.join(folder_path, "*Gratitude*.md")
                     files = glob.glob(pattern)
@@ -466,14 +461,8 @@ Tags: #gratitude"""
     def view_another_random_entry(self, current_window):
         """Load and display another random entry, replacing the current content"""
         try:
-            # Try to find gratitude journal files
-            folder_paths = [
-                r"D:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal",
-                r"G:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal"
-            ]
-
             all_files = []
-            for folder_path in folder_paths:
+            for folder_path in self.JOURNAL_FOLDER_PATHS:
                 if os.path.exists(folder_path):
                     pattern = os.path.join(folder_path, "*Gratitude*.md")
                     files = glob.glob(pattern)
@@ -553,13 +542,8 @@ Tags: #gratitude"""
             # Filter out empty items and strip whitespace
             gratitude_items = [item.strip() for item in gratitude_items if item.strip()]
 
-            folder_paths = [
-                r"D:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal",
-                r"G:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal"
-            ]
-
             folder_path = None
-            for path in folder_paths:
+            for path in self.JOURNAL_FOLDER_PATHS:
                 try:
                     os.makedirs(path, exist_ok=True)
                     folder_path = path
@@ -568,7 +552,7 @@ Tags: #gratitude"""
                     continue
 
             if folder_path is None:
-                raise OSError("Neither D: nor G: drive is accessible")
+                raise OSError("None of the specified drives are accessible")
 
             base_filename = f"{entry_date} Gratitude"
             counter = 0

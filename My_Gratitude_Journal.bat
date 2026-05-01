@@ -26,12 +26,12 @@
 ::ZQ0/vhVqMQ3MEVWAtB9wSA==
 ::Zg8zqx1/OA3MEVWAtB9wSA==
 ::dhA7pRFwIByZRRnk
-::Zh4grVQjdCyDJGaQ+008OydzXgWWNX+vArAjwufu/eSGrnEaRuMrcZvO3rGxKu8G+Evledgozn86
+::Zh4grVQjdCyDJGaQ+008OydzXgWWNX+vArAjwufu/eSGrnEaRuMrcZvO3rGxKu8G+Evleak7hDRfgM5s
 ::YB416Ek+ZG8=
 ::
 ::
 ::978f952a14a936cc963da21a135fa983
 @echo off
-cd /d "C:\GratitudeJournal"
+cd /d "C:\_tools\Gratitude_Journal"
 python gratitude_journal.py
 pause
