@@ -8,13 +8,39 @@ import glob
 import re
 import csv
 
+# The journal lives in a Google Drive shared folder. Google Drive's letter
+# changes depending on which other drives are mounted, so try each in turn.
+JOURNAL_RELATIVE_PATH = r".shortcut-targets-by-id\1SVQqGaxX24ocNWoSWsS8BSM0GPf1NHBC\62.50 Gratitude Journal"
+DRIVE_LETTERS = ["D", "G", "E"]
+JOURNAL_FOLDER_PATHS = [
+    os.path.join(drive + ":\\", JOURNAL_RELATIVE_PATH) for drive in DRIVE_LETTERS
+]
+
 class GratitudeJournal:
-    JOURNAL_FOLDER_PATHS = [
-        r"E:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal",
-        r"D:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal",
-        r"G:\.shortcut-targets-by-id\1SfWBu4Xcf-45vCVl2D6nlal18FFde6c5\62.50 Gratitude Journal"
-    ]
-    SAVE_FOLDER_PATHS = JOURNAL_FOLDER_PATHS[1:]  # exclude C: drive for saving
+    JOURNAL_FOLDER_PATHS = JOURNAL_FOLDER_PATHS
+    SAVE_FOLDER_PATHS = JOURNAL_FOLDER_PATHS
+
+    @classmethod
+    def find_journal_folder(cls, paths=None):
+        """Return the first journal folder that exists, else the first we can create.
+
+        The Google Drive folder already exists, so the existence check is what
+        normally succeeds; creating it is only a fallback for a fresh setup.
+        """
+        paths = cls.JOURNAL_FOLDER_PATHS if paths is None else paths
+
+        for path in paths:
+            if os.path.isdir(path):
+                return path
+
+        for path in paths:
+            try:
+                os.makedirs(path, exist_ok=True)
+                return path
+            except OSError:
+                continue
+
+        return None
 
     def __init__(self):
         self.root = tk.Tk()
@@ -209,15 +235,8 @@ class GratitudeJournal:
     
     def save_gratitude_journal(self):
         try:
-            folder_path = None
-            for path in self.SAVE_FOLDER_PATHS:
-                try:
-                    os.makedirs(path, exist_ok=True)
-                    folder_path = path
-                    break
-                except OSError:
-                    continue
-            
+            folder_path = self.find_journal_folder(self.SAVE_FOLDER_PATHS)
+
             if folder_path is None:
                 raise OSError("None of the specified drives are accessible")
             
@@ -275,7 +294,9 @@ Tags: #gratitude"""
         except Exception as e:
             messagebox.showerror(
                 "Error", 
-                f"Could not save the gratitude journal:\n{str(e)}\n\nPlease check if the C:, D:, or G: drive is accessible."
+                f"Could not save the gratitude journal:\n{str(e)}\n\n"
+                "Tried:\n" + "\n".join(self.SAVE_FOLDER_PATHS) +
+                "\n\nPlease check that Google Drive is running and one of these drives is accessible."
             )
     
     def create_tooltip(self, widget, text):
@@ -542,14 +563,7 @@ Tags: #gratitude"""
             # Filter out empty items and strip whitespace
             gratitude_items = [item.strip() for item in gratitude_items if item.strip()]
 
-            folder_path = None
-            for path in self.JOURNAL_FOLDER_PATHS:
-                try:
-                    os.makedirs(path, exist_ok=True)
-                    folder_path = path
-                    break
-                except OSError:
-                    continue
+            folder_path = self.find_journal_folder()
 
             if folder_path is None:
                 raise OSError("None of the specified drives are accessible")
